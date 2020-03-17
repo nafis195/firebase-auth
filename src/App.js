@@ -39,38 +39,58 @@ function App() {
 
   const handleSignOut = () => {
     firebase.auth().signOut()
-    .then(res => {
-      const signedOutUser = {
-        isSignedIn: false,
-        name: '',
-        photo: '',
-        email: '',
-        password: ''
-      }
-      setUser(signedOutUser);
-      console.log(res);
-    })
-    .catch(err => {
+      .then(res => {
+        const signedOutUser = {
+          isSignedIn: false,
+          name: '',
+          photo: '',
+          email: '',
+          password: '',
+          isValid: false
+        }
+        setUser(signedOutUser);
+        console.log(res);
+      })
+      .catch(err => {
 
-    })
+      })
   }
+
+  const is_valid_email = email => /(.+)@(.+){2,}\.(.+){2,}/.test(email);
+  const hasNumber = input => /\d/.test(input);
 
   const handleChange = e => {
     const newUserInfo = {
       ...user
     }
+
+    // perform validation
+    let isValid = true;
+    if(e.target.name === 'email') {
+      isValid = is_valid_email(e.target.value);
+    }
+    if(e.target.name === 'password') {
+      isValid = e.target.value > 8 && hasNumber(e.target.value);
+    }
+
     newUserInfo[e.target.name] = e.target.value;
+    newUserInfo.isValid = isValid;
     setUser(newUserInfo);
   }
 
   const createAccount = () => {
-    console.log(user.email, user.password);
+    if (user.isValid) {
+      console.log(user.email, user.password);
+    }
+    else{
+      console.log('not valid');
+    }
   }
+
   return (
     <div className="App">
       {
         user.isSignedIn ? <button onClick={handleSignOut}>Sign Out</button> : <button onClick={handleSignIn}>Sign in</button>
-        
       }
       {
         user.isSignedIn && <div>
@@ -80,12 +100,14 @@ function App() {
         </div>
       }
       <h1>Out Own Auth</h1>
-      <input type="text" onBlur={handleChange} name="email" placeholder = "Your email"/>
-      <br/>
-      <input type="password" onBlur={handleChange} name="password" placeholder="password"/>
-      <br/>
-      <button onClick={createAccount}>Create Account</button>
-    </div>
+      <form onSubmit={createAccount}>
+        <input type="text" onBlur={handleChange} name="email" placeholder="Your email" required />
+        <br />
+        <input type="password" onBlur={handleChange} name="password" placeholder="password" required />
+        <br />
+        <input type="submit" value="Create Account" />
+      </form>
+    </div >
   );
 }
 
