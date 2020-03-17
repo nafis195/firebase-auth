@@ -46,7 +46,8 @@ function App() {
           photo: '',
           email: '',
           password: '',
-          isValid: false
+          isValid: false,
+          error: ''
         }
         setUser(signedOutUser);
         console.log(res);
@@ -66,11 +67,11 @@ function App() {
 
     // perform validation
     let isValid = true;
-    if(e.target.name === 'email') {
+    if (e.target.name === 'email') {
       isValid = is_valid_email(e.target.value);
     }
-    if(e.target.name === 'password') {
-      isValid = e.target.value > 8 && hasNumber(e.target.value);
+    if (e.target.name === 'password') {
+      isValid = e.target.value.length > 8 && hasNumber(e.target.value);
     }
 
     newUserInfo[e.target.name] = e.target.value;
@@ -78,13 +79,29 @@ function App() {
     setUser(newUserInfo);
   }
 
-  const createAccount = () => {
+  const createAccount = (event) => {
     if (user.isValid) {
-      console.log(user.email, user.password);
+      firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+        .then(res => {
+          console.log(res);
+          const createdUser = { ...user };
+          createdUser.isSignedIn = true;
+          createdUser.error = '';
+          setUser(createdUser);
+        })
+        .catch(err => {
+          console.log(err.message);
+          const createdUser = { ...user };
+          createdUser.isSignedIn = false;
+          createdUser.error = err.message;
+          setUser(createdUser);
+        })
     }
-    else{
+    else {
       console.log('not valid');
     }
+    event.preventDefault();
+    event.target.reset();
   }
 
   return (
@@ -101,12 +118,17 @@ function App() {
       }
       <h1>Out Own Auth</h1>
       <form onSubmit={createAccount}>
+        <input type="text" onBlur={handleChange} name="name" placeholder="Your name" required />
+        <br />
         <input type="text" onBlur={handleChange} name="email" placeholder="Your email" required />
         <br />
         <input type="password" onBlur={handleChange} name="password" placeholder="password" required />
         <br />
         <input type="submit" value="Create Account" />
       </form>
+      {
+        user.error && <p style={{color:'red'}}>{user.error}</p>
+      }
     </div >
   );
 }
